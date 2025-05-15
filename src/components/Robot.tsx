@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Position } from "../types";
 import { CELL_SIZE, ROBOT_SIZE, MOVE_ANIMATION_DURATION } from "../constants";
-import { Notebook as RobotIcon } from "lucide-react";
+import { RobotSVG } from "./RobotSVG";
 
 interface RobotProps {
   position: Position;
@@ -53,14 +53,9 @@ const Robot: React.FC<RobotProps> = ({
       }}
     >
       <div
-        className={`flex items-center justify-center w-[${ROBOT_SIZE}px] h-[${ROBOT_SIZE}px] rounded-full text-white`}
+        className={`flex items-start justify-start w-[${ROBOT_SIZE}px] h-[${ROBOT_SIZE}px] rounded-full text-white -translate-y-[30%] `}
       >
-        <RobotIcon
-          size={ROBOT_SIZE}
-          className={`${
-            hasReachedGoal ? "text-yellow-400" : "text-yellow-400"
-          }`}
-        />
+        <RobotSVG />
       </div>
     </motion.div>
   );

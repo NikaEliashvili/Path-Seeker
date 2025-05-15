@@ -34,8 +34,6 @@ const Cell: React.FC<CellProps> = ({
   }
 
   const handleClick = () => {
-    console.log({ position });
-
     // Prevent clicking on start or goal positions
     if (!isStart && !isGoal) {
       onClick(position);
@@ -44,7 +42,7 @@ const Cell: React.FC<CellProps> = ({
 
   return (
     <motion.div
-      className={`relative w-full h-full border border-gray-800 rounded-md cursor-pointer ${cellClass} transition-colors duration-200`}
+      className={`relative w-full h-full border border-gray-800 rounded-md cursor-pointer ${cellClass} duration-200 hover:brightness-90 transition-all`}
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{
         scale: 1,
@@ -56,25 +54,14 @@ const Cell: React.FC<CellProps> = ({
     >
       {isStart && (
         <div className="absolute inset-0 flex items-center justify-center text-white font-bold">
-          S
+          Start
         </div>
       )}
       {isGoal && (
         <div className="absolute inset-0 flex items-center justify-center text-white font-bold">
-          G
+          Goal
         </div>
       )}
-      <AnimatePresence>
-        {type === CellTypeEnum.OBSTACLE && (
-          <motion.div
-            className="absolute inset-0 bg-slate-900 rounded-md"
-            initial={{ scale: 0.5 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0.5 }}
-            transition={{ duration: 0.2 }}
-          />
-        )}
-      </AnimatePresence>
       {showOverlay && !isStart && !isGoal && type !== CellTypeEnum.OBSTACLE && (
         <motion.div
           className="absolute inset-0 bg-white/10 flex items-center justify-center"
@@ -83,6 +70,20 @@ const Cell: React.FC<CellProps> = ({
           transition={{ duration: 0.2 }}
         />
       )}
+      <AnimatePresence>
+        {type === CellTypeEnum.OBSTACLE && (
+          <motion.div
+            className={`absolute inset-0 rounded-md overflow-hidden ${CELL_COLORS[type]}`}
+            initial={{ scale: 0.5 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0.5 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className={`absolute inset-0 z-10`}></div>
+            <img src="/danger.jpg" className="opacity-50 brightness-50" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

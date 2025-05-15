@@ -10,6 +10,7 @@ import {
   START_POSITION,
   GOAL_POSITION,
   CELL_SIZE,
+  CELL_COLORS,
 } from "./constants";
 import {
   CellType,
@@ -20,6 +21,7 @@ import {
   PathfindingState,
 } from "./types";
 import { posToStr, arePositionsEqual } from "./utils";
+import { RobotSVG } from "./components/RobotSVG";
 
 function App() {
   // Initialize grid
@@ -109,11 +111,7 @@ function App() {
   // Handle cell click to toggle obstacles
   const handleCellClick = useCallback(
     (position: Position) => {
-      console.log({ position });
-
       if (pathfindingState.isRunning) return;
-      console.log("Position 1:", position);
-
       const posKey = posToStr(position);
 
       // Don't allow placing obstacles on start or goal
@@ -123,7 +121,6 @@ function App() {
       ) {
         return;
       }
-      console.log("Position 2:", position);
 
       setGrid((prevGrid) => {
         const newGrid = prevGrid.map((row) => [...row]);
@@ -140,7 +137,6 @@ function App() {
 
         return newGrid;
       });
-      console.log("Position 3:", position);
 
       setObstacles((prevObstacles) => {
         const newObstacles = new Set(prevObstacles);
@@ -153,7 +149,6 @@ function App() {
 
         return newObstacles;
       });
-      console.log("Position 4:", position);
     },
     [pathfindingState.isRunning]
   );
@@ -179,9 +174,13 @@ function App() {
 
   // Reset everything
   const handleReset = useCallback(() => {
-    if (!pathfindingService) return;
-
-    pathfindingService.reset();
+    setPathfindingState({
+      isRunning: false,
+      currentPath: [],
+      visitedCells: new Set(),
+      knownObstacles: new Set(),
+      status: "IDLE",
+    });
 
     setRobotState({
       position: START_POSITION,
@@ -192,7 +191,7 @@ function App() {
     // Clear obstacles
     setObstacles(new Set());
     setGrid((prevGrid) => {
-      const newGrid = [...prevGrid];
+      const newGrid = prevGrid.map((grid) => [...grid]);
       for (let row = 0; row < GRID_SIZE; row++) {
         for (let col = 0; col < GRID_SIZE; col++) {
           const position: Position = [row, col];
@@ -206,9 +205,10 @@ function App() {
       }
       return newGrid;
     });
+    if (pathfindingService) {
+      pathfindingService.reset();
+    }
   }, [pathfindingService]);
-
-  console.log({ grid });
 
   return (
     <div
@@ -280,32 +280,75 @@ function App() {
               canStart={obstacles.size > 0}
             />
 
+            {!pathfindingState.isRunning &&
+              pathfindingState.status === "GOAL_REACHED" && (
+                <div className="mt-6 bg-gray-800 p-4 rounded-lg shadow-lg text-white/70 font-mono font-semibold text-lg">
+                  <p>
+                    Robot used:{" "}
+                    <span className="text-white">
+                      {" "}
+                      {pathfindingState.currentPath.length} steps{" "}
+                    </span>
+                  </p>
+                  <p className="flex-nowrap inline">Every Step:</p>
+                  <p className="inline ml-2">
+                    {pathfindingState.currentPath.map((pos, indx) => (
+                      <span className="text-base text-white">
+                        ({pos[0]},{pos[1]})
+                        {indx !== pathfindingState.currentPath.length - 1 &&
+                          "; "}
+                      </span>
+                    ))}
+                  </p>
+                </div>
+              )}
+
             <div className="mt-6 bg-gray-800 p-4 rounded-lg shadow-lg">
               <h3 className="text-lg font-medium text-white mb-2">Legend</h3>
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex items-center">
-                  <div className="w-4 h-4 bg-green-600 rounded-sm mr-2"></div>
+                  <div
+                    className={`${
+                      CELL_COLORS[CellType.START]
+                    } w-4 h-4 rounded-sm mr-2`}
+                  ></div>
                   <span className="text-sm text-white">Start (0,0)</span>
                 </div>
                 <div className="flex items-center">
-                  <div className="w-4 h-4 bg-red-600 rounded-sm mr-2"></div>
+                  <div
+                    className={`${
+                      CELL_COLORS[CellType.GOAL]
+                    } w-4 h-4 rounded-sm mr-2`}
+                  ></div>
                   <span className="text-sm text-white">Goal (4,4)</span>
                 </div>
                 <div className="flex items-center">
-                  <div className="w-4 h-4 bg-slate-900 rounded-sm mr-2"></div>
+                  <div
+                    className={`${
+                      CELL_COLORS[CellType.OBSTACLE]
+                    } w-4 h-4 rounded-sm mr-2`}
+                  ></div>
                   <span className="text-sm text-white">Obstacle</span>
                 </div>
                 <div className="flex items-center">
-                  <div className="w-4 h-4 bg-purple-500 opacity-40 rounded-sm mr-2"></div>
+                  <div
+                    className={`${
+                      CELL_COLORS[CellType.VISITED]
+                    } w-4 h-4 rounded-sm mr-2`}
+                  ></div>
                   <span className="text-sm text-white">Visited</span>
                 </div>
                 <div className="flex items-center">
-                  <div className="w-4 h-4 bg-blue-500 rounded-sm mr-2"></div>
+                  <div
+                    className={`${CELL_COLORS["path"]} w-4 h-4 rounded-sm mr-2`}
+                  ></div>
                   <span className="text-sm text-white">Planned Path</span>
                 </div>
                 <div className="flex items-center">
                   <div className="w-4 h-4 flex items-center justify-center bg-transparent mr-2">
-                    <span className="text-yellow-400 text-xs">R</span>
+                    <span className="text-yellow-400 text-xs scale-[0.35]">
+                      <RobotSVG />
+                    </span>
                   </div>
                   <span className="text-sm text-white">Robot</span>
                 </div>

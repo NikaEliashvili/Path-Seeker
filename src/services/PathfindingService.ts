@@ -14,6 +14,7 @@ export class PathfindingService {
   private onStateChange: (state: PathfindingState) => void;
   private onRobotMove: (position: Position) => void;
   private animationSpeed: number = 500;
+  private stopped = false;
 
   constructor(
     obstacles: Set<string>,
@@ -26,6 +27,8 @@ export class PathfindingService {
   }
 
   public async startPathfinding(): Promise<void> {
+    this.stopped = false;
+
     this.state = {
       isRunning: true,
       currentPath: [],
@@ -39,6 +42,8 @@ export class PathfindingService {
       START_POSITION,
       GOAL_POSITION
     );
+
+    if (this.stopped) return;
 
     if (totalPath.length === 0) {
       this.state.status = "NO_PATH";
@@ -62,13 +67,12 @@ export class PathfindingService {
     let robot: Position = [...start];
     const totalPath: Position[] = [];
 
-    while (true) {
-      // Update state to show we're planning
+    while (!this.stopped) {
       this.state.status = "PLANNING";
       this.updateState();
       await sleep(this.animationSpeed / 2);
+      if (this.stopped) return [];
 
-      // Find path from current position to goal
       const result = this.findPath(robot, goal, knownObstacles);
 
       if (!result.found) {
@@ -77,17 +81,17 @@ export class PathfindingService {
         return totalPath;
       }
 
-      // Update the current planned path
       this.state.currentPath = result.path;
       this.updateState();
       await sleep(this.animationSpeed / 2);
+      if (this.stopped) return [];
 
-      // Follow path and detect obstacles
       for (const pos of result.path) {
+        if (this.stopped) return [];
+
         const key = posToStr(pos);
 
         if (this.obstacles.has(key)) {
-          // Obstacle detected - add to known obstacles
           knownObstacles.add(key);
           this.state.knownObstacles = knownObstacles;
           this.state.status = "OBSTACLE_DETECTED";
@@ -95,22 +99,18 @@ export class PathfindingService {
           await sleep(this.animationSpeed);
           break;
         } else {
-          // Move robot to next position
           this.state.status = "MOVING";
           this.updateState();
 
-          // Animate robot movement
           robot = pos;
           this.onRobotMove(robot);
           totalPath.push([...robot]);
-
-          // Add position to visited cells
           this.state.visitedCells.add(posToStr(robot));
           this.updateState();
 
           await sleep(this.animationSpeed);
+          if (this.stopped) return [];
 
-          // Check if goal reached
           if (robot[0] === goal[0] && robot[1] === goal[1]) {
             this.state.status = "GOAL_REACHED";
             this.updateState();
@@ -119,6 +119,8 @@ export class PathfindingService {
         }
       }
     }
+
+    return totalPath;
   }
 
   private findPath(
@@ -162,7 +164,6 @@ export class PathfindingService {
       return { found: false, path: [] };
     }
 
-    // Reconstruct path
     const path: Position[] = [];
     let current = goal;
 
@@ -182,6 +183,8 @@ export class PathfindingService {
   }
 
   public reset(): void {
+    this.stopped = true;
+
     this.state = {
       isRunning: false,
       currentPath: [],
@@ -190,5 +193,9 @@ export class PathfindingService {
       status: "IDLE",
     };
     this.updateState();
+  }
+
+  public stop(): void {
+    this.stopped = true;
   }
 }
