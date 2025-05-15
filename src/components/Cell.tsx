@@ -1,8 +1,8 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Cell as CellType, CellType as CellTypeEnum, Position } from '../types';
-import { CELL_COLORS, START_POSITION, GOAL_POSITION } from '../constants';
-import { arePositionsEqual } from '../utils';
+import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Cell as CellType, CellType as CellTypeEnum, Position } from "../types";
+import { CELL_COLORS, START_POSITION, GOAL_POSITION } from "../constants";
+import { arePositionsEqual } from "../utils";
 
 interface CellProps {
   cell: CellType;
@@ -12,18 +12,18 @@ interface CellProps {
   isVisited: boolean;
 }
 
-const Cell: React.FC<CellProps> = ({ 
-  cell, 
-  onClick, 
-  showOverlay, 
-  isPartOfPath, 
-  isVisited 
+const Cell: React.FC<CellProps> = ({
+  cell,
+  onClick,
+  showOverlay,
+  isPartOfPath,
+  isVisited,
 }) => {
   const { position, type } = cell;
-  
+
   const isStart = arePositionsEqual(position, START_POSITION);
   const isGoal = arePositionsEqual(position, GOAL_POSITION);
-  
+
   // Determine cell appearance
   let cellClass = CELL_COLORS[type];
   if (isVisited && !isStart && !isGoal && type !== CellTypeEnum.OBSTACLE) {
@@ -34,6 +34,8 @@ const Cell: React.FC<CellProps> = ({
   }
 
   const handleClick = () => {
+    console.log({ position });
+
     // Prevent clicking on start or goal positions
     if (!isStart && !isGoal) {
       onClick(position);
@@ -44,13 +46,12 @@ const Cell: React.FC<CellProps> = ({
     <motion.div
       className={`relative w-full h-full border border-gray-800 rounded-md cursor-pointer ${cellClass} transition-colors duration-200`}
       initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ 
-        scale: 1, 
+      animate={{
+        scale: 1,
         opacity: 1,
       }}
       transition={{ duration: 0.3 }}
       onClick={handleClick}
-      whileHover={!isStart && !isGoal ? { scale: 0.95, backgroundColor: type === CellTypeEnum.EMPTY ? 'rgb(55 65 81)' : undefined } : undefined}
       layout
     >
       {isStart && (
@@ -65,7 +66,7 @@ const Cell: React.FC<CellProps> = ({
       )}
       <AnimatePresence>
         {type === CellTypeEnum.OBSTACLE && (
-          <motion.div 
+          <motion.div
             className="absolute inset-0 bg-slate-900 rounded-md"
             initial={{ scale: 0.5 }}
             animate={{ scale: 1 }}
@@ -75,7 +76,7 @@ const Cell: React.FC<CellProps> = ({
         )}
       </AnimatePresence>
       {showOverlay && !isStart && !isGoal && type !== CellTypeEnum.OBSTACLE && (
-        <motion.div 
+        <motion.div
           className="absolute inset-0 bg-white/10 flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.1 }}
